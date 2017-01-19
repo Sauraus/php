@@ -45,6 +45,9 @@ default['php']['ldap']['package']   = 'php5-ldap'
 default['php']['pgsql']['package']  = 'php5-pgsql'
 default['php']['sqlite']['package'] = 'php5-sqlite3'
 
+default['php']['remi']['enabled'] = false
+default['php']['remi']['version'] = nil
+
 case node['platform_family']
 when 'rhel', 'fedora'
   lib_dir = node['kernel']['machine'] =~ /x86_64/ ? 'lib64' : 'lib'
@@ -60,7 +63,11 @@ when 'rhel', 'fedora'
     default['php']['packages'] = %w(php53 php53-devel php53-cli php-pear)
     default['php']['mysql']['package'] = 'php53-mysql'
   else # set fpm attributes as we're on a modern PHP release
-    default['php']['packages'] = %w(php php-devel php-cli php-pear)
+    default['php']['packages'] = if node['platform'] == 'amazon' # amazon names their packages with versions
+                                   %w(php56 php56-devel php-pear)
+                                 else # redhat does not name their packages with version on RHEL 6+
+                                   %w(php php-devel php-cli php-pear)
+                                 end
     default['php']['mysql']['package'] = 'php-mysql'
     default['php']['fpm_package']   = 'php-fpm'
     default['php']['fpm_pooldir']   = '/etc/php-fpm.d'
@@ -72,11 +79,6 @@ when 'rhel', 'fedora'
       default['php']['fpm_listen_user'] = 'apache'
       default['php']['fpm_listen_group'] = 'apache'
     end
-    default['php']['packages'] = if node['platform'] == 'amazon' # amazon names their packages with versions
-                                   %w(php56 php56-devel php-pear)
-                                 else # redhat does not name their packages with version on RHEL 6+
-                                   %w(php php-devel php-pear)
-                                 end
   end
 when 'debian'
   default['php']['conf_dir'] = '/etc/php5/cli'
